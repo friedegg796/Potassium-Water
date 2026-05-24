@@ -1,0 +1,66 @@
+package awanderingmuslim.potassiumwater.entity.custom;
+
+import net.minecraft.core.particles.ItemParticleOption;
+import net.minecraft.core.particles.ParticleOptions;
+import net.minecraft.core.particles.ParticleTypes;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.monster.Blaze;
+import net.minecraft.world.entity.projectile.throwableitemprojectile.Snowball;
+import net.minecraft.world.entity.projectile.throwableitemprojectile.ThrowableItemProjectile;
+import net.minecraft.world.item.Item;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.Items;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.phys.EntityHitResult;
+import net.minecraft.world.phys.HitResult;
+
+public class PotassiumWaterProjectile extends ThrowableItemProjectile {
+    public PotassiumWaterProjectile(EntityType<? extends PotassiumWaterProjectile> entityType, Level level) {
+        super(entityType, level);
+    }
+
+    public PotassiumWaterProjectile(Level level, LivingEntity livingEntity, ItemStack itemStack) {
+        super(EntityType.SNOWBALL, livingEntity, level, itemStack);
+    }
+
+    public PotassiumWaterProjectile(Level level, double d, double e, double f, ItemStack itemStack) {
+        super(EntityType.SNOWBALL, d, e, f, level, itemStack);
+    }
+
+    @Override
+    protected Item getDefaultItem() {
+        return Items.SNOWBALL;
+    }
+
+    private ParticleOptions getParticle() {
+        ItemStack itemStack = this.getItem();
+        return itemStack.isEmpty() ? ParticleTypes.ITEM_SNOWBALL : new ItemParticleOption(ParticleTypes.ITEM, itemStack);
+    }
+
+    @Override
+    public void handleEntityEvent(byte b) {
+        if (b == 3) {
+            ParticleOptions particleOptions = this.getParticle();
+            for (int i = 0; i < 8; ++i) {
+                this.level().addParticle(particleOptions, this.getX(), this.getY(), this.getZ(), 0.0, 0.0, 0.0);
+            }
+        }
+    }
+
+    @Override
+    protected void onHit(HitResult hitResult) {
+        super.onHit(hitResult);
+        if (!this.level().isClientSide()) {
+            this.level().broadcastEntityEvent(this, (byte) 3);
+            level().explode(null,
+                    this.getX(),
+                    this.getY(),
+                    this.getZ(),
+                    3.5f,
+                    Level.ExplosionInteraction.BLOCK);
+            this.discard();
+        }
+    }
+}
